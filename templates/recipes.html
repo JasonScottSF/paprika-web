@@ -29,9 +29,7 @@
 <!-- Topbar -->
 <div class="topbar">
   <span class="topbar-title">
-    {% if favorites %}Favorites
-    {% elif active_cat %}{{ categories|selectattr('Z_PK','equalto',active_cat)|map(attribute='ZNAME')|first }}
-    {% elif sort == 'recent' %}Most Recent
+    {% if active_cat %}{{ categories|selectattr('Z_PK','equalto',active_cat)|map(attribute='ZNAME')|first }}
     {% elif sort == 'rating' %}Top Rated
     {% else %}All Recipes{% endif %}
   </span>
@@ -39,12 +37,10 @@
 
   <!-- Sort -->
   <div class="sort-btns">
-    <a href="?{% if active_cat %}cat={{ active_cat }}&{% endif %}{% if favorites %}favorites=1&{% endif %}sort=name&view={{ view }}"
+    <a href="?{% if active_cat %}cat={{ active_cat }}&{% endif %}sort=name&view={{ view }}"
        class="sort-btn {% if sort == 'name' %}active{% endif %}">A–Z</a>
-    <a href="?{% if active_cat %}cat={{ active_cat }}&{% endif %}{% if favorites %}favorites=1&{% endif %}sort=rating&view={{ view }}"
+    <a href="?{% if active_cat %}cat={{ active_cat }}&{% endif %}sort=rating&view={{ view }}"
        class="sort-btn {% if sort == 'rating' %}active{% endif %}">Rating</a>
-    <a href="?{% if active_cat %}cat={{ active_cat }}&{% endif %}{% if favorites %}favorites=1&{% endif %}sort=recent&view={{ view }}"
-       class="sort-btn {% if sort == 'recent' %}active{% endif %}">Recent</a>
   </div>
 
   <!-- Search -->
@@ -56,19 +52,19 @@
       hx-get="/recipes"
       hx-trigger="input changed delay:280ms, search"
       hx-target="#recipe-container"
-      hx-vals='{"view":"{{ view }}","sort":"{{ sort }}"{% if active_cat %},"cat":"{{ active_cat }}"{% endif %}{% if favorites %},"favorites":"1"{% endif %}'
+      hx-vals='{"view":"{{ view }}","sort":"{{ sort }}"{% if active_cat %},"cat":"{{ active_cat }}"{% endif %}'
       hx-include="[name=q]">
   </div>
 
   <!-- View toggles -->
   <div class="view-toggles">
-    <a href="?{% if active_cat %}cat={{ active_cat }}&{% endif %}{% if favorites %}favorites=1&{% endif %}{% if q %}q={{ q }}&{% endif %}sort={{ sort }}&view=list"
+    <a href="?{% if active_cat %}cat={{ active_cat }}&{% endif %}{% if q %}q={{ q }}&{% endif %}sort={{ sort }}&view=list"
        class="view-btn {% if view == 'list' %}active{% endif %}" title="List view">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
       </svg>
     </a>
-    <a href="?{% if active_cat %}cat={{ active_cat }}&{% endif %}{% if favorites %}favorites=1&{% endif %}{% if q %}q={{ q }}&{% endif %}sort={{ sort }}&view=grid"
+    <a href="?{% if active_cat %}cat={{ active_cat }}&{% endif %}{% if q %}q={{ q }}&{% endif %}sort={{ sort }}&view=grid"
        class="view-btn {% if view == 'grid' %}active{% endif %}" title="Grid view">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
@@ -76,13 +72,6 @@
     </a>
   </div>
 
-  <!-- Favorites -->
-  <a href="?{% if active_cat %}cat={{ active_cat }}&{% endif %}sort={{ sort }}&view={{ view }}&favorites={% if favorites %}0{% else %}1{% endif %}"
-     class="fav-toggle {% if favorites %}active{% endif %}">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="{% if favorites %}currentColor{% else %}none{% endif %}" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/>
-    </svg>
-  </a>
 </div>
 
 <!-- Recipe container (swapped by HTMX) -->
