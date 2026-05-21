@@ -1,0 +1,52 @@
+{% macro stars(rating) %}
+<div class="stars">
+  {% for i in range(1, 6) %}
+    <svg class="star {% if i > rating %}empty{% endif %}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+    </svg>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{% if recipes %}
+  {% for r in recipes %}
+  <a href="/recipes/{{ r.ZUID }}" class="recipe-card">
+    {% if r.thumb_url %}
+      <img class="card-photo" src="{{ r.thumb_url }}" alt="{{ r.ZNAME }}" loading="lazy">
+    {% else %}
+      <div class="card-photo-placeholder">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+        </svg>
+      </div>
+    {% endif %}
+    <div class="card-body">
+      <div class="card-title">{{ r.ZNAME }}</div>
+      <div class="card-meta">
+        {% if r.ZRATING and r.ZRATING > 0 %}
+          {{ stars(r.ZRATING) }}
+        {% endif %}
+        {% set time = r.ZTOTALTIME or r.ZCOOKTIME or r.ZPREPTIME %}
+        {% if time %}
+          <span class="time-badge">{{ time }}</span>
+        {% endif %}
+        {% if r.ZONFAVORITES %}
+          <span class="fav-star">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+          </span>
+        {% endif %}
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+{% else %}
+  <div class="empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803 7.5 7.5 0 0016.803 15.803z"/>
+    </svg>
+    <h3>No recipes found</h3>
+    <p>Try a different search or category.</p>
+  </div>
+{% endif %}

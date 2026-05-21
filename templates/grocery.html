@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Grocery Lists — Paprika{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <span class="topbar-title">Grocery Lists</span>
+</div>
+
+<div class="grocery-wrap" style="padding-top: 20px;">
+
+  <!-- List selector -->
+  <div class="grocery-lists-panel">
+    <div class="grocery-lists-panel-title">Lists</div>
+    {% for lst in lists %}
+      <a href="/grocery?list_id={{ lst.Z_PK }}"
+         class="grocery-list-btn {% if active_list == lst.Z_PK %}active{% endif %}">
+        <span>{{ lst.ZNAME }}</span>
+        <span class="grocery-progress">
+          {{ (lst.purchased or 0) | int }}/{{ lst.total or 0 }}
+        </span>
+      </a>
+    {% else %}
+      <div style="padding: 16px; font-size: .85rem; color: var(--text-muted);">No lists found.</div>
+    {% endfor %}
+  </div>
+
+  <!-- Items -->
+  <div class="grocery-items-panel">
+    {% if items %}
+      {% for aisle, aisle_items in items %}
+        <div class="aisle-group">
+          <div class="aisle-title">{{ aisle }}</div>
+          {% for item in aisle_items %}
+            <div class="grocery-item {% if item.ZPURCHASED %}purchased{% endif %}">
+              <div class="item-check {% if item.ZPURCHASED %}checked{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <span class="item-name">{{ item.ZNAME }}</span>
+              {% if item.ZQUANTITY %}
+                <span class="item-qty">{{ item.ZQUANTITY }}</span>
+              {% endif %}
+              {% if item.ZRECIPENAME %}
+                <span class="item-recipe">{{ item.ZRECIPENAME }}</span>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    {% elif lists %}
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
+        </svg>
+        <h3>This list is empty</h3>
+        <p>Add items in the Paprika app.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
