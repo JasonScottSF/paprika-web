@@ -1,4 +1,3 @@
-import datetime
 import urllib.parse
 from pathlib import Path
 from typing import Optional
@@ -153,68 +152,3 @@ async def suggest(
     return templates.TemplateResponse("suggest.html", ctx)
 
 
-# ── Meal planner ─────────────────────────────────────────────────────────────
-
-@app.get("/menus", response_class=HTMLResponse)
-async def menus(request: Request, week: Optional[str] = Query(None)):
-    if week:
-        try:
-            week_start = datetime.date.fromisoformat(week)
-        except ValueError:
-            week_start = _this_monday()
-    else:
-        week_start = _this_monday()
-
-    week_dates = [week_start + datetime.timedelta(days=i) for i in range(7)]
-    categories = [dict(r) for r in db.get_categories()]
-
-    return templates.TemplateResponse("menus.html", {
-        "request": request,
-        "week_dates": week_dates,
-        "meal_data": db.get_meals_for_week(week_start),
-        "meal_types": ["Breakfast", "Lunch", "Dinner", "Snacks"],
-        "prev_week": (week_start - datetime.timedelta(days=7)).isoformat(),
-        "next_week": (week_start + datetime.timedelta(days=7)).isoformat(),
-        "week_label": _week_label(week_start),
-        "now_date": datetime.date.today().isoformat(),
-        "categories": categories,
-        "total": sum(c["count"] for c in categories),
-    })
-
-
-# ── Grocery ───────────────────────────────────────────────────────────────────
-
-@app.get("/grocery", response_class=HTMLResponse)
-async def grocery(request: Request, list_id: Optional[int] = Query(None)):
-    lists = [dict(r) for r in db.get_grocery_lists()]
-    active_list = list_id or (lists[0]["Z_PK"] if lists else None)
-    grouped_items: list[tuple] = []
-    categories = [dict(r) for r in db.get_categories()]
-
-    if active_list:
-        grouped: dict = {}
-        for item in db.get_grocery_items(active_list):
-            aisle = item["aisle_name"] or item["ZAISLENAME"] or "Other"
-            grouped.setdefault(aisle, []).append(dict(item))
-        grouped_items = sorted(grouped.items())
-
-    return templates.TemplateResponse("grocery.html", {
-        "request": request,
-        "lists": lists,
-        "active_list": active_list,
-        "items": grouped_items,
-        "categories": categories,
-        "total": sum(c["count"] for c in categories),
-    })
-
-
-def _this_monday() -> datetime.date:
-    today = datetime.date.today()
-    return today - datetime.timedelta(days=today.weekday())
-
-
-def _week_label(week_start: datetime.date) -> str:
-    end = week_start + datetime.timedelta(days=6)
-    if week_start.month == end.month:
-        return f"{week_start.strftime('%B %-d')}–{end.day}, {end.year}"
-    return f"{week_start.strftime('%b %-d')} – {end.strftime('%b %-d, %Y')}"
