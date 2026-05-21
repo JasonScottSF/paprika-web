@@ -1,6 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Meal Planner — Paprika{% endblock %}
 
+{% block sidebar_cats %}
+  <div class="sidebar-section" style="margin-top:8px">Categories</div>
+  {% for cat in categories %}
+  <a href="/recipes?cat={{ cat.Z_PK }}" class="cat-item">
+    <svg class="cat-folder" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+    </svg>
+    <span class="cat-name">{{ cat.ZNAME }}</span>
+    <span class="cat-count">{{ cat.count }}</span>
+  </a>
+  {% endfor %}
+{% endblock %}
+
 {% block content %}
 <div class="topbar">
   <span class="topbar-title">Meal Planner</span>
@@ -8,49 +21,40 @@
 
 <div class="planner-wrap">
   <div class="week-nav">
-    <a href="/menus?week={{ prev_week }}" class="week-nav-btn" title="Previous week">
+    <a href="/menus?week={{ prev_week }}" class="week-nav-btn">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
       </svg>
     </a>
     <span class="week-label">{{ week_label }}</span>
-    <a href="/menus?week={{ next_week }}" class="week-nav-btn" title="Next week">
+    <a href="/menus?week={{ next_week }}" class="week-nav-btn">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
       </svg>
     </a>
-    <a href="/menus" class="week-nav-btn" title="This week" style="margin-left: 4px; font-size: .75rem; width: auto; padding: 0 10px; color: var(--text-muted);">
-      Today
-    </a>
+    <a href="/menus" class="week-nav-btn" style="width:auto;padding:0 10px;font-size:.75rem">Today</a>
   </div>
 
-  {% set today = [] %}
-  {% set _ = today.append(namespace(d=none)) %}
-
   <div class="planner-grid">
-    <!-- Header row -->
-    <div class="planner-col-header" style="background: var(--bg);"></div>
+    <div class="planner-col-header" style="background:var(--bg)"></div>
     {% for date in week_dates %}
-      {% set is_today = date.isoformat() == now_date %}
-      <div class="planner-col-header {% if is_today %}today{% endif %}">
+      <div class="planner-col-header {% if date.isoformat() == now_date %}today{% endif %}">
         <div class="day-name">{{ date.strftime('%a') }}</div>
         <div class="day-num">{{ date.day }}</div>
       </div>
     {% endfor %}
 
-    <!-- One row per meal type -->
     {% for meal_type in meal_types %}
       <div class="planner-row-label">{{ meal_type }}</div>
       {% for date in week_dates %}
-        {% set is_today = date.isoformat() == now_date %}
-        <div class="planner-cell {% if is_today %}today{% endif %}">
+        <div class="planner-cell {% if date.isoformat() == now_date %}today{% endif %}">
           {% if date in meal_data and meal_type in meal_data[date] %}
             {% for entry in meal_data[date][meal_type] %}
               <div class="meal-entry">
                 {% if entry.recipe_uid %}
-                  <a href="/recipes/{{ entry.recipe_uid }}" class="meal-entry-name">{{ entry.recipe_name }}</a>
+                  <a href="/recipes/{{ entry.recipe_uid }}">{{ entry.recipe_name }}</a>
                 {% else %}
-                  <span class="meal-entry-name">{{ entry.ZNAME or '—' }}</span>
+                  {{ entry.ZNAME or '—' }}
                 {% endif %}
               </div>
             {% endfor %}
@@ -60,11 +64,10 @@
     {% endfor %}
   </div>
 
-  {% set has_any = meal_data | length > 0 %}
-  {% if not has_any %}
-  <div class="empty-state" style="padding: 40px 0;">
+  {% if not meal_data %}
+  <div class="empty-state" style="padding:36px 0">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5"/>
     </svg>
     <h3>No meals planned this week</h3>
     <p>Add meals in the Paprika app and they'll appear here.</p>

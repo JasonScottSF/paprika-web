@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ ingredient|title }} — Paprika{% endblock %}
+
+{% block sidebar_cats %}
+  <div class="sidebar-section" style="margin-top:8px">Categories</div>
+  <a href="/recipes" class="cat-item">
+    <svg class="cat-folder" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+    </svg>
+    <span class="cat-name">All Recipes</span>
+    <span class="cat-count">{{ total }}</span>
+  </a>
+  {% for cat in categories %}
+  <a href="/recipes?cat={{ cat.Z_PK }}" class="cat-item">
+    <svg class="cat-folder" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+    </svg>
+    <span class="cat-name">{{ cat.ZNAME }}</span>
+    <span class="cat-count">{{ cat.count }}</span>
+  </a>
+  {% endfor %}
+{% endblock %}
+
+{% block content %}
+<div class="ingredient-header-banner">
+  <a href="javascript:history.back()" class="back-link" style="margin-bottom:8px;display:inline-flex">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+    </svg>
+    Back
+  </a>
+  <div class="ingredient-title">{{ ingredient }}</div>
+  <div class="ingredient-subtitle">{{ count }} recipe{% if count != 1 %}s{% endif %} containing this ingredient</div>
+</div>
+
+<div class="recipe-list">
+  {% for r in recipes %}
+  <a href="/recipes/{{ r.ZUID }}" class="recipe-row">
+    <div class="row-thumb">
+      {% if r.thumb_url %}
+        <img src="{{ r.thumb_url }}" alt="{{ r.ZNAME }}" loading="lazy">
+      {% else %}
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+        </svg>
+      {% endif %}
+    </div>
+    <div class="row-info">
+      <div class="row-name">{{ r.ZNAME }}</div>
+      <div class="row-stars">{% if r.ZRATING and r.ZRATING > 0 %}{{ r.ZRATING | stars }}{% else %}<span style="color:var(--text-faint)">☆☆☆☆☆</span>{% endif %}</div>
+      <div class="row-source">{{ r.source_domain }}</div>
+    </div>
+    {% set time = r.ZTOTALTIME or r.ZCOOKTIME or r.ZPREPTIME %}
+    {% if time %}<div class="row-time">{{ time }}</div>{% endif %}
+  </a>
+  {% else %}
+  <div class="empty-state">
+    <h3>No recipes found</h3>
+    <p>No recipes contain "{{ ingredient }}".</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

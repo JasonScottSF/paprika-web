@@ -1,58 +1,20 @@
 {% extends "base.html" %}
 {% block title %}{{ recipe.ZNAME }} — Paprika{% endblock %}
 
-{% block sidebar_extra %}
-  <div style="padding: 16px 18px;">
-    <div class="section-title" style="margin-bottom: 10px;">Quick Info</div>
-    {% if recipe.ZSERVINGS %}
-    <div class="meta-chip" style="margin-bottom: 8px;">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
-      </svg>
-      <span>{{ recipe.ZSERVINGS }}</span>
-    </div>
-    {% endif %}
-    {% if recipe.ZPREPTIME %}
-    <div class="meta-chip" style="margin-bottom: 8px;">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-      <span>Prep: <strong>{{ recipe.ZPREPTIME }}</strong></span>
-    </div>
-    {% endif %}
-    {% if recipe.ZCOOKTIME %}
-    <div class="meta-chip" style="margin-bottom: 8px;">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.047 8.287 8.287 0 009 9.601a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"/>
-      </svg>
-      <span>Cook: <strong>{{ recipe.ZCOOKTIME }}</strong></span>
-    </div>
-    {% endif %}
-    {% if recipe.ZTOTALTIME %}
-    <div class="meta-chip" style="margin-bottom: 8px;">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-      <span>Total: <strong>{{ recipe.ZTOTALTIME }}</strong></span>
-    </div>
-    {% endif %}
-    {% if recipe.ZDIFFICULTY %}
-    <div class="meta-chip" style="margin-bottom: 8px;">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
-      </svg>
-      <span>{{ recipe.ZDIFFICULTY }}</span>
-    </div>
-    {% endif %}
+{% block sidebar_cats %}
+  <div style="padding:14px">
+    <div class="section-title" style="margin-bottom:10px">Quick Info</div>
     {% if recipe.ZRATING and recipe.ZRATING > 0 %}
-    <div class="stars" style="margin-top: 4px;">
-      {% for i in range(1, 6) %}
-        <svg class="star {% if i > recipe.ZRATING %}empty{% endif %}" style="width:16px;height:16px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-        </svg>
-      {% endfor %}
-    </div>
+      <div class="detail-stars" style="margin-bottom:10px">{{ recipe.ZRATING | stars }}</div>
     {% endif %}
+    {% for label, val in [('Servings', recipe.ZSERVINGS), ('Prep', recipe.ZPREPTIME), ('Cook', recipe.ZCOOKTIME), ('Total', recipe.ZTOTALTIME), ('Difficulty', recipe.ZDIFFICULTY)] %}
+      {% if val %}
+      <div class="meta-chip" style="margin-bottom:7px">
+        <strong style="color:var(--text-muted);min-width:60px;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em">{{ label }}</strong>
+        <span style="color:var(--text-2)">{{ val }}</span>
+      </div>
+      {% endif %}
+    {% endfor %}
   </div>
 {% endblock %}
 
@@ -70,11 +32,11 @@
   {% endif %}
 
   <div class="recipe-header">
-    <a href="/recipes" class="back-link">
+    <a href="javascript:history.back()" class="back-link">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
       </svg>
-      All Recipes
+      Back
     </a>
 
     <h1 class="recipe-title">{{ recipe.ZNAME }}</h1>
@@ -91,7 +53,7 @@
     <div class="recipe-source">
       Source:
       {% if recipe.ZSOURCEURL %}
-        <a href="{{ recipe.ZSOURCEURL }}" target="_blank" rel="noopener">{{ recipe.ZSOURCE or recipe.ZSOURCEURL }}</a>
+        <a href="{{ recipe.ZSOURCEURL }}" target="_blank" rel="noopener">{{ recipe.ZSOURCE or recipe.source_domain }}</a>
       {% else %}
         {{ recipe.ZSOURCE }}
       {% endif %}
@@ -100,16 +62,18 @@
   </div>
 
   <div class="recipe-body">
-    <!-- Ingredients -->
+    <!-- Ingredients — each line links to ingredient search -->
     <div class="ingredients-col">
       <div class="section-title">Ingredients</div>
       {% for line in recipe.ingredients_list %}
         {% if line.startswith('!') %}
           <div class="ingredient-header">{{ line[1:] }}</div>
         {% elif not line.strip() %}
-          <div style="height: 8px;"></div>
+          <div style="height:6px"></div>
         {% else %}
-          <div class="ingredient-line">{{ line }}</div>
+          {# Extract a clean name for the link — strip leading qty/unit #}
+          {% set encoded = urlencode(line.strip()) %}
+          <a href="/ingredient/{{ encoded }}" class="ingredient-link">{{ line }}</a>
         {% endif %}
       {% endfor %}
     </div>

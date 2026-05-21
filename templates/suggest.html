@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% block title %}Find by Ingredient — Paprika{% endblock %}
+
+{% block sidebar_cats %}
+  <div class="sidebar-section" style="margin-top:8px">How it works</div>
+  <div style="padding:10px 14px;font-size:.8rem;color:var(--text-muted);line-height:1.6">
+    Add ingredients you have on hand. Include at least one meat and one vegetable. We'll find recipes that match, weighted by your Paprika ratings.
+  </div>
+{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <span class="topbar-title">Find by Ingredient</span>
+</div>
+
+<div class="suggest-wrap">
+  <p class="suggest-subtitle">Enter what you have — we'll find the best matches from your {{ total }} recipes.</p>
+
+  <!-- Ingredient input area -->
+  <div class="ingredient-input-area">
+
+    <!-- Chip display -->
+    <div class="chip-row" id="chip-row">
+      {% for ing in ingredients %}
+        {% set is_meat = ing | lower in ['beef','chicken','pork','lamb','turkey','duck','salmon','tuna','shrimp','bacon','ham','sausage','fish'] %}
+        {% set is_veg  = ing | lower in ['onion','garlic','carrot','celery','broccoli','spinach','tomato','pepper','potato','mushroom','zucchini','corn','kale','lettuce','cucumber'] %}
+        <span class="chip {% if is_meat %}meat{% elif is_veg %}veg{% endif %}" data-name="{{ ing }}">
+          {{ ing }}
+          <span class="chip-remove" onclick="removeIngredient('{{ ing }}')">✕</span>
+        </span>
+      {% endfor %}
+    </div>
+
+    <!-- Typeahead input row -->
+    <div class="ingredient-add-row">
+      <div class="ingredient-typeahead" id="typeahead-wrap">
+        <input type="text" id="ingredient-input" placeholder="e.g. chicken, broccoli, garlic…"
+               autocomplete="off"
+               oninput="onTypeahead(this.value)"
+               onkeydown="onInputKey(event)">
+        <div class="autocomplete-list" id="ac-list" style="display:none"></div>
+      </div>
+      <button class="add-btn" id="add-btn" onclick="addCurrentInput()" disabled>Add</button>
+    </div>
+  </div>
+
+  <!-- Mode + validation + find button -->
+  <form id="suggest-form" method="GET" action="/suggest">
+    <!-- Hidden inputs for ingredients -->
+    <div id="hidden-inputs">
+      {% for ing in ingredients %}
+        <input type="hidden" name="ingredients" value="{{ ing }}">
+      {% endfor %}
+    </div>
+
+    <div class="mode-row">
+      <span class="mode-label">Match:</span>
+      <button type="button" class="mode-btn {% if mode == 'best' %}active{% endif %}" onclick="setMode('best')">Best Match</button>
+      <button type="button" class="mode-btn {% if mode == 'any' %}active{% endif %}" onclick="setMode('any')">Any Ingredient</button>
+      <button type="button" class="mode-btn {% if mode == 'all' %}active{% endif %}" onclick="setMode('all')">All Ingredients</button>
+      <input type="hidden" name="mode" id="mode-input" value="{{ mode }}">
+    </div>
+
+    <!-- Validation pills -->
+    <div class="validation-row" id="validation-row">
+      {% if validation %}
+        <span class="v-pill {% if validation.count >= 3 %}ok{% else %}bad{% endif %}">
+          {% if validation.count >= 3 %}✓{% else %}✗{% endif %} {{ validation.count }}/3 ingredients
+        </span>
+        <span class="v-pill {% if validation.has_meat %}ok{% else %}bad{% endif %}">
+          {% if validation.has_meat %}✓{% else %}✗{% endif %} Meat/protein
+        </span>
+        <span class="v-pill {% if validation.has_veg %}ok{% else %}bad{% endif %}">
+          {% if validation.has_veg %}✓{% else %}✗{% endif %} Vegetable
+        </span>
+      {% else %}
+        <span class="v-pill bad">✗ 0/3 ingredients</span>
+        <span class="v-pill bad">✗ Meat/protein</span>
+        <span class="v-pill bad">✗ Vegetable</span>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="find-btn" id="find-btn"
+            {% if not validation or not validation.valid %}disabled{% endif %}>
+      Find Recipes
+    </button>
+  </form>
+
+  <!-- Results -->
+  {% if ingredients %}
+    {% if validation and not validation.valid %}
+      <div class="empty-state" style="padding:30px 0">
+        <h3>Almost there</h3>
+        <p>{% for e in validation.errors %}{{ e }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+      </div>
+    {% elif results %}
+      <div class="suggest-results">
+        <div class="results-header">{{ results|length }} recipe{% if results|length != 1 %}s{% endif %} found — sorted by best match &amp; rating</div>
+        {% for r in results %}
+        <a href="/recipes/{{ r.ZUID }}" class="suggest-row">
+          <div class="suggest-thumb">
+            {% if r.thumb_url %}
+              <img src="{{ r.thumb_url }}" alt="{{ r.ZNAME }}" loading="lazy">
+            {% else %}
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+              </svg>
+            {% endif %}
+          </div>
+          <div class="suggest-info">
+            <div class="suggest-name">{{ r.ZNAME }}</div>
+            <div class="match-chips">
+              {% for m in r.matched %}
+                <span class="match-chip">✓ {{ m }}</span>
+              {% endfor %}
+              {% if mode == 'best' %}
+                {% for m in r.unmatched %}
+                  <span class="match-chip miss">{{ m }}</span>
+                {% endfor %}
+              {% endif %}
+            </div>
+            <div class="suggest-meta">
+              <span class="suggest-stars">{% if r.ZRATING and r.ZRATING > 0 %}{{ r.ZRATING | stars }}{% else %}<span style="color:var(--text-faint)">☆☆☆☆☆</span>{% endif %}</span>
+              {% set time = r.ZTOTALTIME or r.ZCOOKTIME or r.ZPREPTIME %}
+              {% if time %}<span class="suggest-time">{{ time }}</span>{% endif %}
+              {% if r.source_domain %}<span class="suggest-time">{{ r.source_domain }}</span>{% endif %}
+            </div>
+          </div>
+          <div class="match-score-badge">
+            <div class="match-score-num">{{ r.match_score }}</div>
+            <div class="match-score-label">of {{ ingredients|length }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state" style="padding:30px 0">
+        <h3>No matches found</h3>
+        <p>Try "Any Ingredient" mode or add more ingredients.</p>
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+const MEATS = new Set(['beef','chicken','pork','lamb','turkey','duck','veal','bison',
+  'venison','salmon','tuna','tilapia','cod','halibut','shrimp','crab','lobster',
+  'clam','oyster','mussel','anchovy','bacon','ham','prosciutto','pancetta','chorizo',
+  'sausage','pepperoni','salami','steak','ribs','brisket','tenderloin','fillet',
+  'filet','breast','thigh','wing','drumstick','fish','seafood','meatball','burger',
+  'scallop','squid','octopus','catfish','trout','sardine','herring','liver']);
+
+const VEGETABLES = new Set(['onion','garlic','carrot','celery','broccoli','spinach',
+  'kale','arugula','lettuce','romaine','chard','collard','tomato','pepper','zucchini',
+  'squash','cucumber','mushroom','potato','sweet potato','yam','corn','pea','bean',
+  'lentil','asparagus','artichoke','avocado','beet','bok choy','cabbage','cauliflower',
+  'eggplant','fennel','leek','parsnip','radish','turnip','scallion','shallot',
+  'green bean','brussels sprout','edamame','okra','chile','chili','jalapeno',
+  'serrano','habanero','poblano','bell pepper']);
+
+let ingredients = {{ ingredients | tojson }};
+let acItems = [];
+let acIndex = -1;
+let acDebounce = null;
+
+// ── Autocomplete ─────────────────────────────────────────────────────────────
+function onTypeahead(val) {
+  const addBtn = document.getElementById('add-btn');
+  addBtn.disabled = !val.trim();
+
+  clearTimeout(acDebounce);
+  if (val.length < 2) { closeAc(); return; }
+  acDebounce = setTimeout(() => fetchAc(val), 160);
+}
+
+async function fetchAc(q) {
+  const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  acItems = data.map(d => d.name);
+  acIndex = -1;
+  renderAc();
+}
+
+function renderAc() {
+  const list = document.getElementById('ac-list');
+  if (!acItems.length) { list.style.display = 'none'; return; }
+  list.innerHTML = acItems.map((item, i) =>
+    `<div class="ac-item" onmousedown="addIngredient('${item.replace(/'/g,"\\'")}',true)">${capitalize(item)}</div>`
+  ).join('');
+  list.style.display = 'block';
+}
+
+function closeAc() {
+  document.getElementById('ac-list').style.display = 'none';
+  acItems = []; acIndex = -1;
+}
+
+function onInputKey(e) {
+  if (e.key === 'Enter') { e.preventDefault(); addCurrentInput(); return; }
+  if (e.key === 'Escape') { closeAc(); return; }
+  if (e.key === 'ArrowDown') { acIndex = Math.min(acIndex+1, acItems.length-1); highlightAc(); }
+  if (e.key === 'ArrowUp') { acIndex = Math.max(acIndex-1, -1); highlightAc(); }
+  if ((e.key === 'Tab' || e.key === 'ArrowRight') && acIndex >= 0) {
+    e.preventDefault();
+    addIngredient(acItems[acIndex], true);
+  }
+}
+
+function highlightAc() {
+  document.querySelectorAll('.ac-item').forEach((el, i) =>
+    el.classList.toggle('highlighted', i === acIndex));
+}
+
+// ── Ingredient management ─────────────────────────────────────────────────────
+function addCurrentInput() {
+  const inp = document.getElementById('ingredient-input');
+  const val = (acIndex >= 0 ? acItems[acIndex] : inp.value).trim();
+  if (val) addIngredient(val, true);
+}
+
+function addIngredient(name, clearInput) {
+  name = name.trim().toLowerCase();
+  if (!name || ingredients.includes(name)) { if (clearInput) clearInputField(); return; }
+  ingredients.push(name);
+  if (clearInput) clearInputField();
+  closeAc();
+  renderChips();
+  syncHidden();
+  updateValidation();
+}
+
+function removeIngredient(name) {
+  ingredients = ingredients.filter(i => i !== name);
+  renderChips();
+  syncHidden();
+  updateValidation();
+}
+
+function clearInputField() {
+  const inp = document.getElementById('ingredient-input');
+  inp.value = '';
+  document.getElementById('add-btn').disabled = true;
+}
+
+// ── Chip rendering ────────────────────────────────────────────────────────────
+function chipClass(name) {
+  const l = name.toLowerCase();
+  if ([...MEATS].some(m => l.includes(m))) return 'chip meat';
+  if ([...VEGETABLES].some(v => l.includes(v))) return 'chip veg';
+  return 'chip';
+}
+
+function renderChips() {
+  const row = document.getElementById('chip-row');
+  row.innerHTML = ingredients.map(ing =>
+    `<span class="${chipClass(ing)}" data-name="${ing}">
+      ${capitalize(ing)}
+      <span class="chip-remove" onclick="removeIngredient('${ing.replace(/'/g,"\\'")}')">✕</span>
+    </span>`
+  ).join('');
+}
+
+// ── Sync hidden form inputs ───────────────────────────────────────────────────
+function syncHidden() {
+  const wrap = document.getElementById('hidden-inputs');
+  wrap.innerHTML = ingredients.map(i =>
+    `<input type="hidden" name="ingredients" value="${i}">`
+  ).join('');
+}
+
+// ── Validation ────────────────────────────────────────────────────────────────
+function hasMeat() { return ingredients.some(i => [...MEATS].some(m => i.includes(m))); }
+function hasVeg()  { return ingredients.some(i => [...VEGETABLES].some(v => i.includes(v))); }
+
+function updateValidation() {
+  const count = ingredients.length;
+  const meat  = hasMeat();
+  const veg   = hasVeg();
+  const valid = count >= 3 && meat && veg;
+
+  const row = document.getElementById('validation-row');
+  row.innerHTML = `
+    <span class="v-pill ${count >= 3 ? 'ok':'bad'}">${count >= 3 ? '✓':'✗'} ${count}/3 ingredients</span>
+    <span class="v-pill ${meat ? 'ok':'bad'}">${meat ? '✓':'✗'} Meat/protein</span>
+    <span class="v-pill ${veg  ? 'ok':'bad'}">${veg  ? '✓':'✗'} Vegetable</span>
+  `;
+  document.getElementById('find-btn').disabled = !valid;
+}
+
+// ── Mode selection ────────────────────────────────────────────────────────────
+function setMode(m) {
+  document.getElementById('mode-input').value = m;
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase().replace(/\s+/g,'') ===
+      {best:'bestmatch',any:'anyingredient',all:'allingredients'}[m]);
+  });
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// Close AC on outside click
+document.addEventListener('click', e => {
+  if (!document.getElementById('typeahead-wrap').contains(e.target)) closeAc();
+});
+</script>
+{% endblock %}

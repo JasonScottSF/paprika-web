@@ -1,0 +1,10 @@
+services:
+  paprika-web:
+    build: .
+    ports:
+      - "5007:5007"
+    volumes:
+      - "${PAPRIKA_DATA_DIR:-${HOME}/Library/Group Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data}:/paprika-data:ro"
+    environment:
+      - PAPRIKA_DATA_DIR=/paprika-data
+    restart: unless-stopped
