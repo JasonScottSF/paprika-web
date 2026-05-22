@@ -4,56 +4,81 @@ A read-only web frontend for [Paprika 3](https://www.paprikaapp.com/) that serve
 
 ## Features
 
-- Browse recipes by category, sorted by name, rating, or date added
+- Browse recipes by category, sorted by name or rating
 - List and grid views with thumbnail photos
 - Full-text search (HTMX, no page reload)
-- Favorites filter
 - Clickable ingredients — see every recipe that uses one
 - **Find by Ingredient** — enter what you have, get ranked suggestions weighted by your Paprika ratings (requires 3+ ingredients including a meat and a vegetable)
-- Meal planner and grocery list views
 
-## Requirements
+## Architecture
 
-- Docker
-- Paprika 3 installed on the same Mac (the app reads its SQLite database directly)
-- Nginx Proxy Manager on the same Docker host (for reverse proxy / SSL)
+Paprika 3 stores its data in a SQLite database on your Mac. This app runs on a Linux server and reads a synced copy of that database. The Mac pushes updates to the server on a schedule via rsync.
 
-## Deploy
+```
+Mac (Paprika 3) ──rsync──▶ Linux server (Docker) ──▶ browser
+```
+
+## Server setup
+
+### 1. Clone and configure
 
 ```bash
 git clone https://github.com/JasonScottSF/paprika-web.git
 cd paprika-web
-docker compose up -d --build
+echo "PAPRIKA_DATA_DIR=/opt/paprika-data" > .env
 ```
 
-The Paprika data directory is auto-detected from the default macOS Group Container path. No configuration needed on a standard install.
+### 2. Sync data from Mac (first time)
 
-### Custom data path
-
-If your Paprika data lives elsewhere, set `PAPRIKA_DATA_DIR` before running:
+Run this on the Mac, substituting your server's IP and username:
 
 ```bash
-PAPRIKA_DATA_DIR=/path/to/paprika/Data docker compose up -d --build
+rsync -avz ~/Library/Group\ Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data/ user@server-ip:/opt/paprika-data/
 ```
 
-## Nginx Proxy Manager setup
+### 3. Start the container
 
-The container joins the `nginx-dashboard_dashboard_net` Docker network and is reachable by container name. In NPM, add a Proxy Host:
+```bash
+sudo docker compose up -d --build
+```
+
+### 4. Nginx Proxy Manager
+
+In NPM, add a Proxy Host:
 
 | Setting | Value |
 |---------|-------|
 | Domain | your domain |
-| Scheme | http |
-| Forward Hostname | `paprika-web` |
+| Scheme | `http` |
+| Forward Hostname | server IP or hostname |
 | Forward Port | `5007` |
 
 Enable Let's Encrypt SSL on the SSL tab.
 
-## Updating
+## Keeping data in sync
+
+Add a cron job on the Mac to push updates automatically. Run `crontab -e` and add:
+
+```
+*/15 * * * * rsync -az ~/Library/Group\ Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data/ user@server-ip:/opt/paprika-data/ --delete
+```
+
+This syncs every 15 minutes. The Mac must be on and awake for the sync to run.
+
+To verify the cron is registered:
 
 ```bash
+crontab -l
+```
+
+## Updating the app
+
+On the server:
+
+```bash
+cd ~/paprika-web
 git pull origin main
-docker compose up -d --build
+sudo docker compose up -d --build
 ```
 
 ## Tech stack
